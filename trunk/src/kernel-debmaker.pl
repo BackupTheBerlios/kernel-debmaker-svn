@@ -9,8 +9,13 @@
 # TODO use the ~/.kernel-debmaker/config.xml to set tmpdir, etc.
 # TODO Handle ketchup dependency (nice way: a package for ketchup)
 # TODO License headers!!!!
+# TODO Better XML support for kernel-build.xml (descriptions, define patch as
+#      an url, which possibly requires decompression)
 # TODO Add a log/kernel-debmaker.log file in the output, with a copy of all of
 #      the program's output.
+# TODO Move debian specific code in a class. Idea: a class specific to debian
+#      which inherits from another abstract class. This would lead to a project
+#      name change
 # TODO Run it with sudo in order to debug in eclipse?
 # TODO examples in man page
 # TODO kernel-debmaker -h, --help, -v, --version must work!

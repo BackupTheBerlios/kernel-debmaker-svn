@@ -2,7 +2,7 @@ Source: kernel-debmaker
 Section: main/admin
 Priority: optional
 Maintainer: Olivier Ricordeau <olivier.ricordeau@wanadoo.fr>
-Build-Depends: debhelper (>= 4.0.0), docbook-to-man
+Build-Depends: debhelper (>= 4.0.0), docbook-to-man, docbook-utils
 Standards-Version: 3.6.1
 
 Package: kernel-debmaker
