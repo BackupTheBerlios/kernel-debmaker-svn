@@ -7,7 +7,7 @@ Standards-Version: 3.6.1
 
 Package: kernel-debmaker
 Architecture: any
-Depends: ${shlibs:Depends}, ${misc:Depends}
+Depends: ${shlibs:Depends}, ${misc:Depends}, perl-base, kernel-package, patch,libqt3-dev, libxml-simple-perl, perl-modules
 Description: A tool for building .deb's of a kernel automatically.
  Kernel-debmaker enables you to quickly build kernel packages with the version
  you want, the patches you want, etf. Theorically, you just have to edit a
