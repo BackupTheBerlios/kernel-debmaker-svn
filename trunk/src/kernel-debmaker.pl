@@ -68,6 +68,7 @@ kernel-debmaker [-h] [-d] [-c config.xml] [-o output_dir]
            * modules: builds .deb's of modules using files in /usr/src/modules.
            * kernel-modules: alias for kernel + modules.
            * edit: edit the kernel config file with \"make xconfig\".
+           * tarball: create a distributable tarball containing build info.
            * fetch: fetch sources and create a sources tree.
            * clean: clean temporary files.
            * clean-binary: clean temporary files and built packages.
@@ -199,6 +200,8 @@ switch($options{t})
 	{modules();}
 	case "kernel-modules"
 	{kernel_modules();}
+	case "tarball"
+	{tarball();}
 	case "edit"
 	{edit();}
 	case "fetch"
@@ -471,6 +474,18 @@ $buildXmlConfigDir/$kernelConfigFile.old`;
 	print "done\n";
 }
 
+# create a tarball and exit
+sub tarball
+{
+	dprint("calling tarball()");
+	# clean logs
+	if (-d "$realOut/log")
+	{
+		`rm -Rf $realOut/log`;
+	}
+	create_tarball();
+}
+
 # executes $ARGV[0] and logs the result in $ARGV[1]
 # TODO Timeout on child's STDOUT. If nothing is displayed for a long time, show
 # log end.
@@ -539,8 +554,11 @@ sub create_tarball
 		`cp -f $patchWithPath $tempdir/`;
 	}
 	# copy logs
-	`mkdir $tempdir/log`;
-	`cp -f $realOut/log/*.log $tempdir/log`;
+	if (-d "$realOut/log")
+	{
+		`mkdir $tempdir/log`;
+		`cp -f $realOut/log/*.log $tempdir/log`;
+	}
 	# compress
 	`( cd $workDir && tar cvjf $tarballName.tar.bz2 $tarballName )`;
 	# copy tarball in output directory
@@ -575,6 +593,8 @@ sub set_step_count
 		{$stepCount = 12;}
 		case "edit"
 		{$stepCount = 8;}
+		case "tarball"
+		{$stepCount = 2;}
 		case "fetch"
 		{$stepCount = 4;}
 		case "clean"

@@ -23,7 +23,7 @@ manpage.1: manpage.sgml
   <!ENTITY dhdate      "<date>nov 2004</date>">
   <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
        allowed: see man(7), man(1). -->
-  <!ENTITY dhsection   "<manvolnum>8</manvolnum>">
+  <!ENTITY dhsection   "<manvolnum>1</manvolnum>">
   <!ENTITY dhemail     "<email>olivier.ricordeau@wanadoo.fr</email>">
   <!ENTITY dhusername  "Olivier Ricordeau">
   <!ENTITY dhucpackage "<refentrytitle>KERNEL-DEBMAKER</refentrytitle>">
@@ -138,6 +138,7 @@ manpage.1: manpage.sgml
           <para><command>modules</command> - Builds .deb's of modules using files in /usr/src/modules.</para>
           <para><command>kernel-modules</command> - Alias for kernel + modules.</para>
           <para><command>edit</command> - Edit the kernel config file with "make xconfig".</para>
+          <para><command>tarball</command> - Create a distributable tarball containing build info.</para>
           <para><command>fetch</command> - Fetch sources and create a sources tree.</para>
           <para><command>clean</command> - Clean temporary files.</para>
           <para><command>clean-binary</command> - Clean temporary files and built packages.</para>
@@ -155,18 +156,31 @@ manpage.1: manpage.sgml
 
   </refsect1>
   <refsect1>
-    <title>SEE ALSO</title>
-
-    <para>kernel-package (5), make-kpkg (1).</para>
-
-  </refsect1>
-  <refsect1>
     <title>Examples</title>
     
     <para>To document.
     </para>
     
     <para>To document.
+    </para>
+    
+  </refsect1>
+  <refsect1>
+    <title>Using a tarball</title>
+    
+    <para>If you get a tarball built with kernel-debmaker, you can use as a
+    base for building your own kernel, or leave it unmodified and just try
+    to build the same kernel.
+    </para>
+    <para>Using a tarball is very simple. First, extract it using
+    <command>tar</command> as in this example:
+    <command>"tar xvjf 2.6.9-srv-presario9xx.1.tar.bz2"</command>. This will
+    create a new subdirectory containing the build information (kernel-build.xml,
+    kernel config file, patches, and possibly logs of the build).
+    </para>
+    <para>Once you have extracted the tarball, you can do anything you want with
+    the provided kernel-build.xml file, kernel config file and patches to suite
+    your needs and build a fresh kernel.
     </para>
     
   </refsect1>
@@ -189,6 +203,12 @@ manpage.1: manpage.sgml
     <para>To document.
     </para>
     
+  </refsect1>
+  <refsect1>
+    <title>SEE ALSO</title>
+
+    <para>kernel-package (5), make-kpkg (1).</para>
+
   </refsect1>
   <refsect1>
     <title>AUTHOR</title>
