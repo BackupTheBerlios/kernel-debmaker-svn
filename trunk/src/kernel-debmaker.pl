@@ -12,9 +12,9 @@
 # TODO Add a log/kernel-debmaker.log file in the output, with a copy of all of
 #      the program's output.
 # TODO Run it with sudo in order to debug in eclipse?
-# TODO Debian package
-# TODO Write main Makefile (mainly make install)
+# TODO man page
 # TODO Check ketchup options!!!
+# TODO use a specific ketchup cache in ~/.kernel-debmaker
 # TODO Test suite. bad cases to test:
 #      -> no debianized module sources
 #      -> files not here

@@ -21,7 +21,7 @@ build-stamp:
 	
 	# Add here commands to compile the package.
 	$(MAKE)
-	#/usr/bin/docbook-to-man debian/gentoo.sgml > gentoo.1
+	/usr/bin/docbook-to-man debian/kernel-debmaker.sgml > debian/kernel-debmaker.8
 	
 	touch build-stamp
 
@@ -62,7 +62,7 @@ binary-arch: build install
 #        dh_installmime
 #        dh_installinit
 	dh_installcron
-	dh_installman
+	dh_installman debian/kernel-debmaker.8
 	dh_installinfo
 #        dh_undocumented
 	dh_installchangelogs ChangeLog
@@ -80,4 +80,3 @@ binary-arch: build install
 
 binary: binary-indep binary-arch
 .PHONY: build clean binary-indep binary-arch binary install
-        
