@@ -17,17 +17,17 @@ manpage.1: manpage.sgml
   -->
 
   <!-- Fill in your name for FIRSTNAME and SURNAME. -->
-  <!ENTITY dhfirstname "<firstname>FIRSTNAME</firstname>">
-  <!ENTITY dhsurname   "<surname>SURNAME</surname>">
+  <!ENTITY dhfirstname "<firstname>Olivier</firstname>">
+  <!ENTITY dhsurname   "<surname>Ricordeau</surname>">
   <!-- Please adjust the date whenever revising the manpage. -->
-  <!ENTITY dhdate      "<date>#SHORTDATE#</date>">
+  <!ENTITY dhdate      "<date>nov 2004</date>">
   <!-- SECTION should be 1-8, maybe w/ subsection other parameters are
        allowed: see man(7), man(1). -->
-  <!ENTITY dhsection   "<manvolnum>SECTION</manvolnum>">
-  <!ENTITY dhemail     "<email>#EMAIL#</email>">
-  <!ENTITY dhusername  "#USERNAME#">
-  <!ENTITY dhucpackage "<refentrytitle>#UCPACKAGE#</refentrytitle>">
-  <!ENTITY dhpackage   "#PACKAGE#">
+  <!ENTITY dhsection   "<manvolnum>8</manvolnum>">
+  <!ENTITY dhemail     "<email>olivier.ricordeau@wanadoo.fr</email>">
+  <!ENTITY dhusername  "Olivier Ricordeau">
+  <!ENTITY dhucpackage "<refentrytitle>KERNEL-DEBMAKER</refentrytitle>">
+  <!ENTITY dhpackage   "kernel-debmaker">
 
   <!ENTITY debian      "<productname>Debian</productname>">
   <!ENTITY gnu         "<acronym>GNU</acronym>">
@@ -57,30 +57,31 @@ manpage.1: manpage.sgml
   <refnamediv>
     <refname>&dhpackage;</refname>
 
-    <refpurpose>program to do something</refpurpose>
+    <refpurpose>A tool for building .deb's of a kernel automatically.</refpurpose>
   </refnamediv>
   <refsynopsisdiv>
     <cmdsynopsis>
       <command>&dhpackage;</command>
-
-      <arg><option>-e <replaceable>this</replaceable></option></arg>
-
-      <arg><option>--example <replaceable>that</replaceable></option></arg>
+      <arg><option>-h</option></arg>
+      <arg><option>-d</option></arg>
+      <arg><option>-c <replaceable>config.xml</replaceable></option></arg>
+      <arg><option>-o <replaceable>output_dir</replaceable></option></arg>
+      <arg><option>-w <replaceable>work_dir</replaceable></option></arg>
+      <arg><option>-t <replaceable>target</replaceable></option></arg>
+      <arg>-f <replaceable>kernel-build.xml</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
     <title>DESCRIPTION</title>
 
-    <para>This manual page documents briefly the
-      <command>&dhpackage;</command> and <command>bar</command>
-      commands.</para>
+    <para>
+    This manual page documents briefly the
+    <command>&dhpackage;</command> command.
+    </para>
 
-    <para>This manual page was written for the &debian; distribution
-      because the original program does not have a manual page.
-      Instead, it has documentation in the &gnu;
-      <application>Info</application> format; see below.</para>
-
-    <para><command>&dhpackage;</command> is a program that...</para>
+    <para>
+    <command>&dhpackage;</command> is a program that...
+    </para>
 
   </refsect1>
   <refsect1>
@@ -92,32 +93,102 @@ manpage.1: manpage.sgml
       <application>Info</application> files.</para>
 
     <variablelist>
+
       <varlistentry>
-        <term><option>-h</option>
-          <option>--help</option>
-        </term>
+        <term><option>-h</option></term>
         <listitem>
-          <para>Show summary of options.</para>
+          <para>Displays an help message.</para>
         </listitem>
       </varlistentry>
+      
       <varlistentry>
-        <term><option>-v</option>
-          <option>--version</option>
-        </term>
+        <term><option>-d</option></term>
         <listitem>
-          <para>Show version of program.</para>
+          <para>Activates debug mode.</para>
         </listitem>
       </varlistentry>
+      
+      <varlistentry>
+        <term><option>-c <replaceable>config.xml</replaceable></option></term>
+        <listitem>
+          <para>Use the specified configuration file.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-o <replaceable>output_dir</replaceable></option></term>
+        <listitem>
+          <para>Use the specified directory to output .deb packages.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-w <replaceable>work_dir</replaceable></option></term>
+        <listitem>
+          <para>Use the specified working directory.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-t <replaceable>target</replaceable></option></term>
+        <listitem>
+          <para>Build the specified target. Default: "kernel-modules".</para>
+          <para>The available targets are:</para>
+          <para><command>kernel</command> - Builds .deb's of kernel + modules thanks to make-kpkg.</para>
+          <para><command>modules</command> - Builds .deb's of modules using files in /usr/src/modules.</para>
+          <para><command>kernel-modules</command> - Alias for kernel + modules.</para>
+          <para><command>edit</command> - Edit the kernel config file with "make xconfig".</para>
+          <para><command>fetch</command> - Fetch sources and create a sources tree.</para>
+          <para><command>clean</command> - Clean temporary files.</para>
+          <para><command>clean-binary</command> - Clean temporary files and built packages.</para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term>-f <replaceable>kernel-build.xml</replaceable></term>
+        <listitem>
+          <para>Use the specified build configuration file.</para>
+        </listitem>
+      </varlistentry>
+
     </variablelist>
+
   </refsect1>
   <refsect1>
     <title>SEE ALSO</title>
 
-    <para>bar (1), baz (1).</para>
+    <para>kernel-package (5), make-kpkg (1).</para>
 
-    <para>The programs are documented fully by <citetitle>The Rise and
-      Fall of a Fooish Bar</citetitle> available via the
-      <application>Info</application> system.</para>
+  </refsect1>
+  <refsect1>
+    <title>Examples</title>
+    
+    <para>To document.
+    </para>
+    
+    <para>To document.
+    </para>
+    
+  </refsect1>
+  <refsect1>
+    <title>kernel-build.xml</title>
+    
+    <para>To document.
+    </para>
+    
+    <para>To document.
+    </para>
+    
+  </refsect1>
+  <refsect1>
+    <title>config.xml</title>
+    
+    <para>To document.
+    </para>
+    
+    <para>To document.
+    </para>
+    
   </refsect1>
   <refsect1>
     <title>AUTHOR</title>

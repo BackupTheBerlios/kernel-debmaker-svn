@@ -7,25 +7,29 @@
 #      http://perl.active-venture.com/lib/Pod/Usage.html
 # TODO use GnuPG module to import kernel.org public key.
 # TODO use the ~/.kernel-debmaker/config.xml to set tmpdir, etc.
-# TODO check for ketchup's presence and exit in a clean way if it is not
-#      installed
+# TODO Handle ketchup dependency (nice way: a package for ketchup)
 # TODO Add a log/kernel-debmaker.log file in the output, with a copy of all of
 #      the program's output.
 # TODO Run it with sudo in order to debug in eclipse?
-# TODO man page
+# TODO examples in man page
+# TODO kernel-debmaker -h, --help, -v, --version must work!
 # TODO Check ketchup options!!!
 # TODO use a specific ketchup cache in ~/.kernel-debmaker
+# TODO Also output a kernel-2.6.9-srv-presario9xx.tar.bz2 containing xml, patches, config file.
 # TODO Test suite. bad cases to test:
 #      -> no debianized module sources
 #      -> files not here
 #      -> some modules fail to build
 #      -> working dir parameter w/wo slash at the end
 #      -> xml file argument stress
+# TODO -v option which displays build progress
+# TODO GUI to edit kernel-build.xml
 # TODO Changelog editing with "dch"? (dch must be run from within the tree)
 # TODO Check that kernel-modules works even if there is no module (default...)
 # TODO Handle nice priority in user conf
-# TODO rename 2.6.8 stuffs
 # TODO more details about each patch in the xml (tricky XML::Simple ...)
+# TODO .deb repository on berlios.de webpage
+# TODO DTD and validation before loading xml files
 
 use strict;
 use warnings;
@@ -37,7 +41,6 @@ use File::Spec;
 use POSIX qw(:sys_wait_h);
 use IO::Handle;
 use XML::Simple qw(:strict);
-# TODO remove this when xml debuging is done
 use Data::Dumper;
 
 my $version = "0.2";
@@ -57,15 +60,14 @@ if (defined $options{h})
 	print "Builds Debian packages of a kernel using a configuration file.
 License: GNU GPL.
 Usage:
-kernel-debmaker [-h] [-d] [-c KERNEL_DEBMAKER_CONFIG_FILE] [-o OUTPUT_DIR]
-                [-w WORK_DIR] -f BUILD_CONFIG_FILE -t TARGET
+kernel-debmaker [-h] [-d] [-c config.xml] [-o output_dir]
+                [-w work_dir] -t target -f kernel-build.xml
 -h: Displays this help message.
 -d: Activates debug mode.
--c KERNEL_DEBMAKER_CONFIG_FILE: use the specified configuration file.
--o OUTPUT_DIR: use the specified directory to output .deb packages.
--w WORK_DIR: use the specified working directory.
--f BUILD_CONFIG_FILE: use the specified build configuration file.
--t TARGET: build the specified target. Default: \"kernel-modules\"
+-c config.xml: use the specified configuration file.
+-o output_dir: use the specified directory to output .deb packages.
+-w work_dir: use the specified working directory.
+-t target: build the specified target. Default: \"kernel-modules\"
            The available targets are:
            * kernel: builds .deb's of kernel + modules thanks to make-kpkg.
            * modules: builds .deb's of modules using files in /usr/src/modules.
@@ -74,6 +76,7 @@ kernel-debmaker [-h] [-d] [-c KERNEL_DEBMAKER_CONFIG_FILE] [-o OUTPUT_DIR]
            * fetch: fetch sources and create a sources tree.
            * clean: clean temporary files.
            * clean-binary: clean temporary files and built packages.
+-f kernel-build.xml: use the specified build configuration file.
 ";
 	exit 0;
 }
@@ -246,7 +249,7 @@ sub kernel
 	debian();
 	kernel_build();
 	clean();
-	print "Packages created in $outDir\n";
+	print "\nPackages created in $outDir\n";
 }
 
 # Builds modules packages.
@@ -261,7 +264,7 @@ sub modules
 	debian();
 	modules_build();
 	clean();
-	print "Packages created in $outDir\n";
+	print "\nPackages created in $outDir\n";
 }
 
 # Builds kernel + modules packages.
@@ -277,7 +280,7 @@ sub kernel_modules
 	modules_build();
 	kernel_build();
 	clean();
-	print "Packages created in $outDir\n";
+	print "\nPackages created in $outDir\n";
 }
 
 # Does the actual build of the kernel
@@ -356,6 +359,7 @@ cd $kernelSources && ketchup $kernelVersion )",
 }
 
 # Applies asked patches.
+# TODO exit nicely if patching fails
 sub patch
 {
 	dprint("calling patch()");
