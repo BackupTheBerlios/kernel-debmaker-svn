@@ -8,6 +8,7 @@
 # TODO use GnuPG module to import kernel.org public key.
 # TODO use the ~/.kernel-debmaker/config.xml to set tmpdir, etc.
 # TODO Handle ketchup dependency (nice way: a package for ketchup)
+# TODO License headers!!!!
 # TODO Add a log/kernel-debmaker.log file in the output, with a copy of all of
 #      the program's output.
 # TODO Run it with sudo in order to debug in eclipse?
@@ -15,14 +16,8 @@
 # TODO kernel-debmaker -h, --help, -v, --version must work!
 # TODO Check ketchup options!!!
 # TODO use a specific ketchup cache in ~/.kernel-debmaker
-# TODO Also output a kernel-2.6.9-srv-presario9xx.tar.bz2 containing xml, patches, config file.
-# TODO Test suite. bad cases to test:
-#      -> no debianized module sources
-#      -> files not here
-#      -> some modules fail to build
-#      -> working dir parameter w/wo slash at the end
-#      -> xml file argument stress
-# TODO -v option which displays build progress
+# TODO Test suite
+# TODO --verbose option which displays build progress
 # TODO GUI to edit kernel-build.xml
 # TODO Changelog editing with "dch"? (dch must be run from within the tree)
 # TODO Check that kernel-modules works even if there is no module (default...)
@@ -177,6 +172,8 @@ my $kernelConfigFile = $buildXmlConfig{KERNEL_CONFIG_FILE};
 # Set other variables
 my $makekpkg = "nice -n 9 make-kpkg -rev Custom.$packageRevision --append_to_version -$kernelName";
 my $kernelSources = "linux-$kernelVersion";
+my $tarballName = "$kernelVersion-$kernelName.$packageRevision";
+
 # Get output directory's canonical path
 my ($volume,$directories,$file) = File::Spec->splitpath(
 												File::Spec->canonpath(
@@ -227,6 +224,7 @@ sub clean
 	dprint("calling clean()");
 	step_print("cleaning temporary files ...");
 	`rm -Rf $workDir/$kernelSources`;
+	`rm -Rf $workDir/$tarballName`;
 }
 
 # Creates a kernel sources tree and exits
@@ -248,8 +246,9 @@ sub kernel
 	patch();
 	debian();
 	kernel_build();
+	create_tarball();
 	clean();
-	print "\nPackages created in $outDir\n";
+	print "\nPackages created in $realOut\n";
 }
 
 # Builds modules packages.
@@ -263,8 +262,9 @@ sub modules
 	patch();
 	debian();
 	modules_build();
+	create_tarball();
 	clean();
-	print "\nPackages created in $outDir\n";
+	print "\nPackages created in $realOut\n";
 }
 
 # Builds kernel + modules packages.
@@ -279,8 +279,9 @@ sub kernel_modules
 	debian();
 	modules_build();
 	kernel_build();
+	create_tarball();
 	clean();
-	print "\nPackages created in $outDir\n";
+	print "\nPackages created in $realOut\n";
 }
 
 # Does the actual build of the kernel
@@ -323,7 +324,6 @@ sub clean_binary
 	clean_binary_modules();
 }
 
-
 # Cleans existing kernel packages in the output directory.
 sub clean_binary_kernel
 {
@@ -335,6 +335,7 @@ sub clean_binary_kernel
 	$realOut/kernel-headers-[0-9].[0-9].[0-9]*-$kernelName*.deb \
 	$realOut/kernel-image-[0-9].[0-9].[0-9]*-$kernelName*.deb \
 	$realOut/kernel-source-[0-9].[0-9].[0-9]*-$kernelName*.deb`;
+	clean_tarball();
 }
 
 # Cleans existing modules .deb.
@@ -343,6 +344,16 @@ sub clean_binary_modules
 	dprint("calling clean_binary_modules()");
 	step_print("cleaning modules .deb's ...");
 	`rm -Rf $realOut/*-module-[0-9].[0-9].[0-9]*-$kernelName*.deb`;
+	clean_tarball();
+}
+
+# removes the tarball
+sub clean_tarball
+{
+	if (-f "$realOut/$tarballName.tar.bz2")
+	{
+		`rm -f $realOut/$tarballName.tar.bz2`;
+	}
 }
 
 # Fetches kernel sources and uncompress them.
@@ -448,14 +459,16 @@ sub edit
 $kernelConfigFile");
 	print "Please save your configuration in the graphical interface when you have
 finished editing. If you don't save, the configuration file will be untouched.
-Now starting graphical interface ...\n";
+Now building and starting the graphical interface ...\n";
 	clean_log($logFiles{EDIT});
 	command("( cd $workDir/$kernelSources && make xconfig )",
 	$logFiles{EDIT});
 	step_print("creating backup ...");
-	`cp -f $kernelConfigFile $kernelConfigFile.old`;
-	step_print("copynig new configuration in\n$kernelConfigFile ...");
-	`cp -f $workDir/$kernelSources/.config $kernelConfigFile`;
+	`cp -f $buildXmlConfigDir/$kernelConfigFile \\\
+$buildXmlConfigDir/$kernelConfigFile.old`;
+	step_print("copynig new configuration in\n$buildXmlConfigDir ...");
+	`cp -f $workDir/$kernelSources/.config $buildXmlConfigDir/$kernelConfigFile`;
+	print "done\n";
 }
 
 # executes $ARGV[0] and logs the result in $ARGV[1]
@@ -502,6 +515,38 @@ $_[1]";
 	close(LOGFILE);
 }
 
+# creates a .tar.bz2 file in the output directory with kernel-build.xml,
+# .config, patches and logs
+sub create_tarball
+{
+	step_print("creating $tarballName.tar.bz2 ...");
+	# create temp directory
+	my $tempdir = "$workDir/$tarballName";
+	`mkdir -p $tempdir`;
+	# copy kernel-build.xml
+	my $volume;
+	my $directories;
+	my $file;
+	($volume,$directories,$file) = File::Spec->splitpath($options{f});
+	`cp -f $buildXmlConfigDir/$file $tempdir/kernel-build.xml`;
+	# copy kernel config file
+	`cp -f $buildXmlConfigDir/$buildXmlConfig{KERNEL_CONFIG_FILE} $tempdir/`;
+	# copy patches
+	my @patches = split(/ /, $buildXmlConfig{PATCHES});
+	for (@patches)
+	{
+		my $patchWithPath = "$buildXmlConfigDir/$_";
+		`cp -f $patchWithPath $tempdir/`;
+	}
+	# copy logs
+	`mkdir $tempdir/log`;
+	`cp -f $realOut/log/*.log $tempdir/log`;
+	# compress
+	`( cd $workDir && tar cvjf $tarballName.tar.bz2 $tarballName )`;
+	# copy tarball in output directory
+	`cp -f $workDir/$tarballName.tar.bz2 $realOut`;
+}
+
 # blanks the $_[0] log file
 sub clean_log
 {
@@ -523,11 +568,11 @@ sub set_step_count
 	switch($options{t})
 	{
 		case "kernel"
-		{$stepCount = 9;}
+		{$stepCount = 10;}
 		case "modules"
-		{$stepCount = 9;}
+		{$stepCount = 10;}
 		case "kernel-modules"
-		{$stepCount = 11;}
+		{$stepCount = 12;}
 		case "edit"
 		{$stepCount = 8;}
 		case "fetch"
