@@ -17,10 +17,6 @@ WORK_DIR = /tmp
 # You might want to output the packages in /tmp/something and then move them.
 OUT_DIR = /root/kernel_packages
 
-# absolute path to the ketchup script (absolute!!).
-# ex: KETCHUP = /home/olivier/projects/kernel-debmaker/ketchup-0.7
-KETCHUP = /home/olivier/projects/kernel-debmaker/bin/ketchup-0.7
-
 # (* End of the config section *)
 
 
@@ -54,24 +50,7 @@ KERNEL_SOURCES=linux-$(KERNEL_VERSION)
 
 REAL_OUT = $(OUT_DIR)/$(KERNEL_VERSION)-$(KERNEL_NAME)
 
-help:
-	@echo " (* kernel-debmaker help *)"
-	@echo
-	@echo " * kernel-debmaker kernel"
-	@echo "   builds .deb's of kernel + modules (everything which is in the kernel"
-	@echo "   sources tree) thanks to make-kpkg"
-	@echo " * kernel-debmaker modules"
-	@echo "   builds .deb's of modules using files in /usr/src/modules"
-	@echo " * kernel-debmaker kernel-modules"
-	@echo "   alias for kernel + modules"
-	@echo " * kernel-debmaker edit"
-	@echo "   edit the kernel config file with \"make xconfig\""
-	@echo " * kernel-debmaker fetch"
-	@echo "   fetch sources and create a sources tree in the working directory"
-	@echo " * kernel-debmaker clean"
-	@echo "   clean temporary files"
-	@echo " * kernel-debmaker clean-binary"
-	@echo "   clean temporary files and built packages"
+KETCHUP = /usr/bin/ketchup
 
 kernel: backup clean-binary-kernel fetch patch debian _kernel clean
 
