@@ -1,0 +1,131 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+  <meta content="text/html; charset=ISO-8859-1"
+ http-equiv="content-type">
+  <title>kernel-debmaker</title>
+</head>
+<body>
+<h1>kernel-debmaker</h1>
+<br>
+<h2>What is it?<br>
+</h2>
+<big>A tool for building .deb's of a kernel automatically.
+Theorically, you just have to edit a configuration file and run a
+command as root...</big><br>
+<h2><span style="font-weight: bold;"></span>Features</h2>
+<big>What kind of tasks can this stuff do?<br>
+</big>
+<ul>
+  <li><big><span style="font-weight: bold;">fetch sources</span> and <span
+ style="font-weight: bold;">patch them</span> thanks to the <span
+ style="font-style: italic;">"ketchup"</span> script, and <span
+ style="font-weight: bold;">create a place where you can make your
+kernel configuration</span> (i.e. create a .config file)<span
+ style="font-style: italic;"></span>.</big></li>
+  <li><big><span style="font-weight: bold;">build .deb packages</span>
+and an <span style="font-weight: bold;">apt repository</span></big>.<br>
+  </li>
+</ul>
+<h2>Requirements<br>
+</h2>
+Required before running <span style="font-style: italic;">"make"</span>:<br>
+<ul>
+  <li style="font-style: italic;">apt-get install <span
+ style="font-weight: bold;">kernel-package</span></li>
+  <li>use <span style="font-style: italic;">"apt-cache search
+kernel-patch-debian"</span> to show the available debian patches)</li>
+  <li style="font-style: italic;">apt-get install <span
+ style="font-weight: bold;">kernel-patch-debian-x.x.x</span></li>
+</ul>
+<ul>
+  <li>edit your<span style="font-style: italic;"> <span
+ style="font-weight: bold;">/etc/kernel-pkg.conf</span></span>
+or <span style="font-style: italic; font-weight: bold;">~root/.kernel-pkg.conf</span>
+and
+make sure you have a <span style="font-style: italic;">"image_in_boot
+:= True"</span> line in it. Add it if it's not here.</li>
+  <li>get the <span style="font-style: italic;">"ketchup"</span>
+script ( <a title="Get the &quot;ketchup&quot; script" target="_blank"
+ href="http://www.selenic.com/ketchup/">http://www.selenic.com/ketchup/
+    </a>), which requires <span style="font-weight: bold;">python</span><br>
+  </li>
+  <li>fill the config section of the <span style="font-style: italic;">Makefile</span></li>
+  <li>fasten your seatbelt and run "make" as root ;)</li>
+</ul>
+<h2>Make targets<br>
+</h2>
+<ul style="font-style: italic;">
+  <li>all</li>
+</ul>
+<ul>
+Fetches the sources, builds the .deb packages of the kernel, and
+creates an apt
+repository for them.<br>
+</ul>
+<ul style="font-style: italic;">
+  <li>fetch</li>
+</ul>
+<div style="margin-left: 40px;">Fetches the kernel sources thanks to
+the ketchup script.<br>
+</div>
+<ul style="font-style: italic;">
+  <li>clean</li>
+</ul>
+<div style="margin-left: 40px;">Cleans the installed sources tree (<span
+ style="font-style: italic;">i.e.</span> runs <span
+ style="font-style: italic;">"make clean"</span> in the sources tree).<br>
+</div>
+<ul style="font-style: italic;">
+  <li>clean-binary</li>
+</ul>
+<div style="margin-left: 40px;">Removes the apt repository and the
+sources tree.<br>
+</div>
+<span style="font-weight: bold;"></span>
+<h2>Download</h2>
+<h2>Todo</h2>
+<ul>
+  <li>alsa does not work! (at least on my laptop)</li>
+  <li>handle removal of files in ~root/.ketchup</li>
+  <li>explain how to use the apt repository (on localhost? without http
+possible?)</li>
+  <li>handle .deb and repository without internet access</li>
+  <li>handle .config file creation</li>
+"make newconfig", "make configedit", edit the current config
+file
+($EDITOR, graphical or not, dependencies, ask how to edit on prompt?)<br>
+</ul>
+<ul>
+  <li>handle gpg key (if not here...)</li>
+  <li>one must be able to create a directory with:</li>
+  <ul>
+    <li>a .config&nbsp; file</li>
+    <li>a file containing infos to fetch sources and bulid the stuff.</li>
+    <li>this way one can redistribute kernel packages build
+descriptions as tarballs (and packages...
+kernel-debmaker-2.6.5-oricordeau-presario9xx)</li>
+    <li>handle build description .deb's and .tar.bz2 creation!</li>
+    <li>enable commands like "kernel-debmaker -c
+2.6.5-oricordeau-presario.build"<br>
+    </li>
+  </ul>
+  <li>rewrite in perl? or hide behind a shell script</li>
+  <li>separate configuration (include kernel-debmaker.conf)</li>
+  <li>handle dependency on debian packages (kernel-patch-debianlogo
+...) from the config file<br>
+  </li>
+  <li>it must be easy to:</li>
+  <ul>
+    <li>edit the current kernel config</li>
+    <li>switch from a version to another</li>
+    <li>try a&nbsp; config + build from an existing config</li>
+  </ul>
+  <li>logs about the build?</li>
+  <li>test suite: build standard debian kernels</li>
+  <li>XML configuration files + gtk GUI</li>
+  <li>check that all build dependencies are here before building<br>
+  </li>
+</ul>
+</body>
+</html>
