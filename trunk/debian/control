@@ -1,0 +1,14 @@
+Source: kernel-debmaker
+Section: main/admin
+Priority: optional
+Maintainer: Olivier Ricordeau <olivier.ricordeau@wanadoo.fr>
+Build-Depends: debhelper (>= 4.0.0)
+Standards-Version: 3.6.1
+
+Package: kernel-debmaker
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: A tool for building .deb's of a kernel automatically.
+ Kernel-debmaker enables you to quickly build kernel packages with the version
+ you want, the patches you want, etf. Theorically, you just have to edit a
+ configuration file and run a command as root...
