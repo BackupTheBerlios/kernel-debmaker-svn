@@ -9,7 +9,7 @@
 # TODO use the ~/.kernel-debmaker/config.xml to set tmpdir, etc.
 # TODO Handle ketchup dependency (nice way: a package for ketchup)
 # TODO License headers!!!!
-# TODO Better XML support for kernel-build.xml (descriptions, define patch as
+# TODO Better XML support for kernel.xml (descriptions, define patch as
 #      an url, which possibly requires decompression)
 # TODO Add a log/kernel-debmaker.log file in the output, with a copy of all of
 #      the program's output.
@@ -23,7 +23,7 @@
 # TODO use a specific ketchup cache in ~/.kernel-debmaker
 # TODO Test suite
 # TODO --verbose option which displays build progress
-# TODO GUI to edit kernel-build.xml
+# TODO GUI to edit kernel.xml
 # TODO Changelog editing with "dch"? (dch must be run from within the tree)
 # TODO Check that kernel-modules works even if there is no module (default...)
 # TODO Handle nice priority in user conf
@@ -61,7 +61,7 @@ if (defined $options{h})
 License: GNU GPL.
 Usage:
 kernel-debmaker [-h] [-d] [-c config.xml] [-o output_dir]
-                [-w work_dir] -t target -f kernel-build.xml
+                [-w work_dir] [-t target] -f kernel.xml
 -h: Displays this help message.
 -d: Activates debug mode.
 -c config.xml: use the specified configuration file.
@@ -77,7 +77,7 @@ kernel-debmaker [-h] [-d] [-c config.xml] [-o output_dir]
            * fetch: fetch sources and create a sources tree.
            * clean: clean temporary files.
            * clean-binary: clean temporary files and built packages.
--f kernel-build.xml: use the specified build configuration file.
+-f kernel.xml: use the specified build configuration file.
 ";
 	exit 0;
 }
@@ -535,7 +535,7 @@ $_[1]";
 	close(LOGFILE);
 }
 
-# creates a .tar.bz2 file in the output directory with kernel-build.xml,
+# creates a .tar.bz2 file in the output directory with kernel.xml,
 # .config, patches and logs
 sub create_tarball
 {
@@ -543,12 +543,12 @@ sub create_tarball
 	# create temp directory
 	my $tempdir = "$workDir/$tarballName";
 	`mkdir -p $tempdir`;
-	# copy kernel-build.xml
+	# copy kernel.xml
 	my $volume;
 	my $directories;
 	my $file;
 	($volume,$directories,$file) = File::Spec->splitpath($options{f});
-	`cp -f $buildXmlConfigDir/$file $tempdir/kernel-build.xml`;
+	`cp -f $buildXmlConfigDir/$file $tempdir/kernel.xml`;
 	# copy kernel config file
 	`cp -f $buildXmlConfigDir/$buildXmlConfig{KERNEL_CONFIG_FILE} $tempdir/`;
 	# copy patches

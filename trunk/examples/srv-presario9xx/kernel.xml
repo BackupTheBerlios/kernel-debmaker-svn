@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
+
+<!-- kernel build information fot kernel-debmaker -->
+
 <kernelbuild>
 <kernelname>srv-presario9xx</kernelname>
 <packagerevision>1</packagerevision>

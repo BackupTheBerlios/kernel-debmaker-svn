@@ -31,7 +31,7 @@ my $test = Test::Builder->new;
 $test->plan(tests => 2);
 
 # run tests
-$test->ok(0, "kernel-build.xml not here");
+$test->ok(0, "kernel.xml not here");
 $test->ok(1, "-f not used");
 
 exit 0;

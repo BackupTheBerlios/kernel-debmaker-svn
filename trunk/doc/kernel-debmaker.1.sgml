@@ -68,7 +68,7 @@ manpage.1: manpage.sgml
       <arg><option>-o <replaceable>output_dir</replaceable></option></arg>
       <arg><option>-w <replaceable>work_dir</replaceable></option></arg>
       <arg><option>-t <replaceable>target</replaceable></option></arg>
-      <arg>-f <replaceable>kernel-build.xml</replaceable></arg>
+      <arg>-f <replaceable>kernel.xml</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
   <refsect1>
@@ -146,7 +146,7 @@ manpage.1: manpage.sgml
       </varlistentry>
 
       <varlistentry>
-        <term>-f <replaceable>kernel-build.xml</replaceable></term>
+        <term>-f <replaceable>kernel.xml</replaceable></term>
         <listitem>
           <para>Use the specified build configuration file.</para>
         </listitem>
@@ -175,17 +175,17 @@ manpage.1: manpage.sgml
     <para>Using a tarball is very simple. First, extract it using
     <command>tar</command> as in this example:
     <command>"tar xvjf 2.6.9-srv-presario9xx.1.tar.bz2"</command>. This will
-    create a new subdirectory containing the build information (kernel-build.xml,
+    create a new subdirectory containing the build information (kernel.xml,
     kernel config file, patches, and possibly logs of the build).
     </para>
     <para>Once you have extracted the tarball, you can do anything you want with
-    the provided kernel-build.xml file, kernel config file and patches to suite
+    the provided kernel.xml file, kernel config file and patches to suite
     your needs and build a fresh kernel.
     </para>
     
   </refsect1>
   <refsect1>
-    <title>kernel-build.xml</title>
+    <title>kernel.xml</title>
     
     <para>To document.
     </para>
