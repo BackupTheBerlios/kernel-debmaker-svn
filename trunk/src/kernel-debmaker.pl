@@ -1,32 +1,71 @@
-#!/usr/bin/perl
+#!/usr/bin/perl -w
+
+# TODO command line: remove -f and -t options since the parameters are mandatory.
+#      => use Getop::Long and Pod::usage();
+#      http://perl.active-venture.com/lib/Getopt/Long.html
+#      http://www.perldoc.com/perl5.6/pod/perlpod.html
+#      http://perl.active-venture.com/lib/Pod/Usage.html
+# TODO use GnuPG module to import kernel.org public key.
+# TODO use the ~/.kernel-debmaker/config.xml to set tmpdir, etc.
+# TODO check for ketchup's presence and exit in a clean way if it is not
+#      installed
+# TODO Add a log/kernel-debmaker.log file in the output, with a copy of all of
+#      the program's output.
+# TODO Run it with sudo in order to debug in eclipse?
+# TODO Debian package
+# TODO Write main Makefile (mainly make install)
+# TODO Check ketchup options!!!
+# TODO Test suite. bad cases to test:
+#      -> no debianized module sources
+#      -> files not here
+#      -> some modules fail to build
+#      -> working dir parameter w/wo slash at the end
+#      -> xml file argument stress
+# TODO Changelog editing with "dch"? (dch must be run from within the tree)
+# TODO Check that kernel-modules works even if there is no module (default...)
+# TODO Handle nice priority in user conf
+# TODO rename 2.6.8 stuffs
+# TODO more details about each patch in the xml (tricky XML::Simple ...)
+
+use strict;
+use warnings;
+use diagnostics -verbose;
 
 use Getopt::Std;
 use Switch;
+use File::Spec;
+use POSIX qw(:sys_wait_h);
+use IO::Handle;
+use XML::Simple qw(:strict);
+# TODO remove this when xml debuging is done
+use Data::Dumper;
 
 my $version = "0.2";
 
 # Say hello!
 print "kernel-debmaker $version
-Copyright 2003-2004 Olivier Ricordeau
+Copyright 2003-2004 Olivier Ricordeau (olivier.ricordeau\@wanadoo.fr)
 This is free software with ABSOLUTELY NO WARRANTY.\n\n";
 
 # Parse command line options with Getopt::Std.
-%options=();
-getopts("hc:o:w:f:t:",\%options);
+my %options = ();
+getopts("hdc:o:w:f:t:",\%options);
 
 # Print help and exit if -h option.
 if (defined $options{h})
 {
 	print "Builds Debian packages of a kernel using a configuration file.
+License: GNU GPL.
 Usage:
-kernel-debmaker.pl [-h] [-c KERNEL_DEBMAKER_CONFIG_FILE] [-o OUTPUT_DIR] [-w WORK_DIR] -f BUILD_CONFIG_FILE -t TARGET
-
+kernel-debmaker [-h] [-d] [-c KERNEL_DEBMAKER_CONFIG_FILE] [-o OUTPUT_DIR]
+                [-w WORK_DIR] -f BUILD_CONFIG_FILE -t TARGET
 -h: Displays this help message.
+-d: Activates debug mode.
 -c KERNEL_DEBMAKER_CONFIG_FILE: use the specified configuration file.
 -o OUTPUT_DIR: use the specified directory to output .deb packages.
 -w WORK_DIR: use the specified working directory.
 -f BUILD_CONFIG_FILE: use the specified build configuration file.
--t TARGET: build the specified target.
+-t TARGET: build the specified target. Default: \"kernel-modules\"
            The available targets are:
            * kernel: builds .deb's of kernel + modules thanks to make-kpkg.
            * modules: builds .deb's of modules using files in /usr/src/modules.
@@ -39,97 +78,138 @@ kernel-debmaker.pl [-h] [-c KERNEL_DEBMAKER_CONFIG_FILE] [-o OUTPUT_DIR] [-w WOR
 	exit 0;
 }
 
+# Check -d
+my $debugMode = 0;
+if (defined $options{d})
+{
+	$debugMode = 1;
+}
+
 # Check that the arguments are valid.
 
 # Check -c.
-my $userPreferences;
-if (defined $options{c})
-{
-	readConfigFile($options{c});
-}
-else
-{
-	if (-f "$ENV{HOME}/.kernel-debmaker/config")
-	{
-		readConfigFile("$ENV{HOME}/.kernel-debmaker/config");
-	}
-	else
-	{
-		`mkdir -p $ENV{HOME}/.kernel-debmaker`;
-		`touch $ENV{HOME}/.kernel-debmaker/config`;
-		print "Error: please fill the configuration file (default: ~/.kernel-debmaker/config)!\n";
-		exit 1;
-	}
-}
-# Set variables read from the config file.
-my $kernelName = $userPreferences{KERNEL_NAME};
-my $packageRevision = $userPreferences{PACKAGE_REVISION};
-my $kernelVersion = $userPreferences{KERNEL_VERSION};
-my $makekpkgOptions = $userPreferences{MAKE_KPKG_OPTIONS};
-my $patches = $userPreferences{PATCHES};
-my $kernelConfigFile = $userPreferences{KERNEL_CONFIG_FILE};
+my %buildXmlConfig = ();
+#if (defined $options{c})
+#{
+#	readConfigFile($options{c});
+#}
+#else
+#{
+#	if (-f "$ENV{HOME}/.kernel-debmaker/config")
+#	{
+#		readConfigFile("$ENV{HOME}/.kernel-debmaker/config");
+#	}
+#	else
+#	{
+#		`mkdir -p $ENV{HOME}/.kernel-debmaker`;
+#		`touch $ENV{HOME}/.kernel-debmaker/config`;
+#		print STDERR "Error: please fill the configuration file (default: ~/.kernel-debmaker/config)!\n";
+#		exit 1;
+#	}
+#}
 
-# Set other variables
-my $makekpkg = "nice -n 9 make-kpkg -rev Custom.$packageRevision --append_to_version -$kernelName";
-my $kernelSources = "linux-$kernelVersion";
-my $realOut = "$outDir/$kernelVersion-$kernelName";
 # Check -o.
+my $outDir = "";
 if (defined $options{o})
 {
 	if (!(-d $options{o}))
 	{
 		`mkdir $options{o}`;
 	}
-	my $outDir = $options{o};
+	$outDir = $options{o};
 }
 else
 {
-	my $outDir = "$ENV{HOME}/.kernel-debmaker/output";
+	$outDir = "$ENV{HOME}/.kernel-debmaker/output";
 }
 # Check -w.
+my $workDir = "";
 if (defined $options{w})
 {
 	if (!(-d $options{w}))
 	{
 		`mkdir $options{w}`;
 	}
-	my $workDir = $options{w};
+	$workDir = $options{w};
 }
 else
 {
-	my $workDir = "/tmp";
+	$workDir = "/tmp";
 }
+
+# Check -t.
+if (not defined $options{t})
+{
+	$options{t} = "kernel-modules";
+}
+
 # Check -f.
 if (not defined $options{f})
 {
-	print "Error: no build configuration file provided!\n";
+	print STDERR "Error: no build configuration file provided!\n";
 	exit 1;
 }
 if ( (defined $options{f}) && !(-e $options{f}) )
 {
-	print "Error: build configuration file \"$options{f}\" does not exist!\n";
+	print STDERR "Error: build configuration file \"$options{f}\" does not exist!\n";
 	exit 1;
 }
-# Check -t.
-if (not defined $options{t})
-{
-	print "Error: no target specified!\n";
-	exit 1;
-}
+
+# Set up step counter
+my $step = 0;
+my $stepCount;
+
+set_step_count();
+
+my $buildXmlConfigDir;
+read_build_xml_config();
+
+# Set variables read from the config file.
+my $kernelName = $buildXmlConfig{KERNEL_NAME};
+my $packageRevision = $buildXmlConfig{PACKAGE_REVISION};
+my $kernelVersion = $buildXmlConfig{KERNEL_VERSION};
+my $makekpkgOptions = $buildXmlConfig{MAKE_KPKG_OPTIONS};
+my $kernelConfigFile = $buildXmlConfig{KERNEL_CONFIG_FILE};
+
+# Set other variables
+my $makekpkg = "nice -n 9 make-kpkg -rev Custom.$packageRevision --append_to_version -$kernelName";
+my $kernelSources = "linux-$kernelVersion";
+# Get output directory's canonical path
+my ($volume,$directories,$file) = File::Spec->splitpath(
+												File::Spec->canonpath(
+													File::Spec->rel2abs($outDir)));
+my $realOut = "$directories$file/$kernelVersion-$kernelName";
+
+# This variable will store the current logfile name
+my %logFiles = ();
+$logFiles{LOGDIR} = "$realOut/log";
+`mkdir -p $logFiles{LOGDIR}`;
+$logFiles{FETCH} = "$realOut/log/fetch.log";
+$logFiles{KERNEL_BUILD} = "$realOut/log/kernel_build.log";
+$logFiles{MODULES_BUILD} = "$realOut/log/modules_build.log";
+$logFiles{EDIT} = "$realOut/log/edit.log";
+$logFiles{MAKEKPKG_DEBIAN} = "$realOut/log/make-kpkg_debian.log";
 
 # Execute the asked target.
 switch($options{t})
 {
-	case "kernel" {kernel();}
-	case "modules" {modules();}
-	case "kernel-modules" {kernel_modules();}
-	case "edit" {edit();}
-	case "fetch" {fetch();}
-	case "clean" {clean();}
-	case "clean-binary" {clean_binary();}
+	case "kernel"
+	{kernel();}
+	case "modules"
+	{modules();}
+	case "kernel-modules"
+	{kernel_modules();}
+	case "edit"
+	{edit();}
+	case "fetch"
+	{fetch();}
+	case "clean"
+	{clean();}
+	case "clean-binary"
+	{clean_binary();}
 	else
 	{
-		print "Error: invalid target \"$options{t}\"!\n";
+		print STDERR "Error: invalid target \"$options{t}\"!\n";
 		exit 1;
 	}
 }
@@ -141,66 +221,100 @@ exit 0;
 # Cleans temporary files.
 sub clean
 {
-	print " + cleaning temporary files ...";
+	dprint("calling clean()");
+	step_print("cleaning temporary files ...");
 	`rm -Rf $workDir/$kernelSources`;
+}
+
+# Creates a kernel sources tree and exits
+sub fetch
+{
+	clean();
+	fetch_and_uncompress();
+	print "kernel sources tree created in\n$workDir/$kernelSources\n";
 }
 
 # Builds kernel packages.
 sub kernel
 {
+	dprint("calling kernel()");
 	backup();
 	clean_binary_kernel();
-	fetch();
+	clean();
+	fetch_and_uncompress();
 	patch();
 	debian();
-	print " + building kernel packages ...";
-	`( cd $workDir/$kernelSources && \
-	echo > debian/official && \
-	nice -n 19 $makekpkg $makekpkgOptions \
-	--bzimage buildpackage )`;
-	`mkdir -p $realOut`;
-	`mv $workDir/kernel-source-[0-9].[0-9].[0-9]-$kernelName*.changes \
-	$workDir/kernel-doc-[0-9].[0-9].[0-9]-$kernelName*.deb \
-	$workDir/kernel-headers-[0-9].[0-9].[0-9]-$kernelName*.deb \
-	$workDir/kernel-image-[0-9].[0-9].[0-9]-$kernelName*.deb \
-	$workDir/kernel-source-[0-9].[0-9].[0-9]-$kernelName*.deb \
-	$realOut`;
+	kernel_build();
 	clean();
+	print "Packages created in $outDir\n";
 }
 
 # Builds modules packages.
 sub modules
 {
+	dprint("calling modules()");
 	backup();
 	clean_binary_modules();
-	fetch();
+	clean();
+	fetch_and_uncompress();
 	patch();
 	debian();
-	print " + building modules packages ...";
-	`( cd $workDir/$kernelSources && \
-	echo > debian/official && \
-	$makekpkg $makekpkgOptions \
-	--bzimage modules_image )`;
-	`mkdir -p $realOut`;
-	`mv $workDir)/*-module*-[0-9].[0-9].[0-9]-$kernelName*.deb $realOut`;
+	modules_build();
 	clean();
+	print "Packages created in $outDir\n";
 }
 
 # Builds kernel + modules packages.
 sub kernel_modules
 {
+	dprint("calling kernel_modules()");
+	backup();
 	clean_binary_modules();
-	fetch();
+	clean();
+	fetch_and_uncompress();
 	patch();
 	debian();
-	modules();
-	kernel();
+	modules_build();
+	kernel_build();
 	clean();
+	print "Packages created in $outDir\n";
+}
+
+# Does the actual build of the kernel
+sub kernel_build
+{
+	step_print("building kernel packages ...");
+	clean_log($logFiles{KERNEL_BUILD});
+	command("( cd $workDir/$kernelSources && \\\
+echo > debian/official && \\\
+nice -n 19 $makekpkg $makekpkgOptions --bzimage buildpackage )",
+	$logFiles{KERNEL_BUILD});
+	`mkdir -p $realOut`;
+	`mv $workDir/kernel-source-[0-9].[0-9].[0-9]*-$kernelName*.changes \\\
+$workDir/kernel-doc-[0-9].[0-9].[0-9]*-$kernelName*.deb \\\
+$workDir/kernel-headers-[0-9].[0-9].[0-9]*-$kernelName*.deb \\\
+$workDir/kernel-image-[0-9].[0-9].[0-9]*-$kernelName*.deb \\\
+$workDir/kernel-source-[0-9].[0-9].[0-9]*-$kernelName*.deb \\\
+$realOut`;
+}
+
+# Does the actual build of modules
+sub modules_build
+{
+	step_print("building modules packages ...");
+	clean_log($logFiles{MODULES_BUILD});
+	command("( cd $workDir/$kernelSources && \\\
+echo > debian/official && \\\
+$makekpkg $makekpkgOptions --bzimage modules_image )",
+	$logFiles{MODULES_BUILD});
+	`mkdir -p $realOut`;
+	`mv $workDir/*-module*-[0-9].[0-9].[0-9]*-$kernelName*.deb $realOut`;
 }
 
 # Cleans all compiled .deb's.
 sub clean_binary
 {
+	dprint("calling clean_binary()");
 	clean();
 	clean_binary_kernel();
 	clean_binary_modules();
@@ -210,95 +324,293 @@ sub clean_binary
 # Cleans existing kernel packages in the output directory.
 sub clean_binary_kernel
 {
-	print " + cleaning kernel .deb's ...";
+	dprint("calling clean_binary_kernel()");
+	step_print("cleaning kernel .deb's ...");
+# TODO Fails if no file is here. Correct it!
 	`rm -Rf $realOut/kernel-source-[0-9].[0-9].[0-9]*$kernelName*.changes \
-	$realOut/kernel-doc-[0-9].[0-9].[0-9]-$kernelName*.deb \
-	$realOut/kernel-headers-[0-9].[0-9].[0-9]-$kernelName*.deb \
-	$realOut/kernel-image-[0-9].[0-9].[0-9]-$kernelName*.deb \
-	$realOut/kernel-source-[0-9].[0-9].[0-9]-$kernelName*.deb`;
+	$realOut/kernel-doc-[0-9].[0-9].[0-9]*-$kernelName*.deb \
+	$realOut/kernel-headers-[0-9].[0-9].[0-9]*-$kernelName*.deb \
+	$realOut/kernel-image-[0-9].[0-9].[0-9]*-$kernelName*.deb \
+	$realOut/kernel-source-[0-9].[0-9].[0-9]*-$kernelName*.deb`;
 }
 
 # Cleans existing modules .deb.
 sub clean_binary_modules
 {
-	print " + cleaning modules .deb's ...";
-	`rm -Rf $realOut/*-module-[0-9].[0-9].[0-9]-$kernelName*.deb`;
+	dprint("calling clean_binary_modules()");
+	step_print("cleaning modules .deb's ...");
+	`rm -Rf $realOut/*-module-[0-9].[0-9].[0-9]*-$kernelName*.deb`;
 }
 
 # Fetches kernel sources and uncompress them.
-sub fetch
+sub fetch_and_uncompress
 {
-	clean();
-	print " + fetching kernel sources and creating kernel sources tree ...";
-	`( cd $workDir && \
-	mkdir -p $kernelSources && \
-	cd $kernelSources && \
-	nice -n 19 ketchup $kernelVersion )`;
-	print " + copying config file in $workDir/$kernelSources";
-	`cp $kernelConfigFile \
-	$workDir/$kernelSources/.config`;
+	dprint("calling fetch()");
+	step_print("fetching kernel sources and creating kernel sources tree ...");
+	clean_log($logFiles{FETCH});
+	command("( cd $workDir && mkdir -p $kernelSources && \\\
+cd $kernelSources && ketchup $kernelVersion )",
+	$logFiles{FETCH});
+	step_print("copying config file in kernel sources tree ...");
+	`cp $buildXmlConfigDir/$kernelConfigFile $workDir/$kernelSources/.config`;
 }
 
 # Applies asked patches.
 sub patch
 {
-	for ($patches)
+	dprint("calling patch()");
+	step_print("patches");
+	my @patches = split(/ /, $buildXmlConfig{PATCHES});
+	for (@patches)
 	{
-		print " + applying $_ ...";
-		`( cd $workDir/$kernelSources) && patch -p1 < $_ )`;
+		my $patchWithPath = "$buildXmlConfigDir/$_";
+		# Check for patch's presence
+		if (not -f $patchWithPath)
+		{
+			print STDERR "patch \"$patchWithPath\" not found!\n";
+			exit 1;
+		}
+		print "applying $_ ...\n";
+		my $logFile = "$logFiles{LOGDIR}/$_.log";
+		clean_log($logFile);
+		command("( cd $workDir/$kernelSources && patch -p1 < $patchWithPath )",
+					$logFile);
 	}
+
+#	my $patches = $buildXmlConfig{PATCHES};
+#	print Dumper($patches);
+#	my $i;
+#	for $i (0 .. $#patches)
+#	{
+##		print Dumper($_);
+#		my $patchName = $patches[$i]{file};
+#		print "applying $patchName ...\n";
+#		my $logFile = "$logFiles{LOGDIR}/$patchName.log";
+#		clean_log($logFile);
+#		command("( cd $workDir/$kernelSources && patch -p1 < $buildXmlConfigDir/$patchName )",
+#		$logFile);
+#	}
+#	exit 1;
 }
 
 # Runs make-kpkg debian.
 sub debian
 {
-	print " + running make-kpkg debian ...";
-	`( cd $workDir/$kernelSources && $makekpkg debian )`;
+	dprint("calling debian()");
+	step_print("running make-kpkg debian ...");
+	clean_log($logFiles{MAKEKPKG_DEBIAN});
+	command("( cd $workDir/$kernelSources && $makekpkg debian )",
+	$logFiles{MAKEKPKG_DEBIAN});
 }
 
 # Creates a backup of old packages if already existing.
 sub backup
 {
+	dprint("calling backup()");
 	if (-d $realOut)
 	{
-		print " + creating a backup of old files in $realOut.bak ...";
-		`mkdir $realOut.bak && cp -r $realOut/* $realOut.bak`;
+		step_print("creating a backup of old files in\n\"$realOut.bak\" ...");
+		# Blank the $realOut.bak directory
+		if (!(-d "$realOut.bak"))
+		{
+			`mkdir -p $realOut.bak`;
+		}
+		else
+		{
+			`rm -Rf $realOut.bak && mkdir -p $realOut.bak`;
+		}
+		# Copy .deb's if they exist
+		opendir REALOUT, "$realOut.bak";
+		my $firstFile = readdir REALOUT; # .
+		$firstFile = readdir REALOUT; # ..
+		$firstFile = readdir REALOUT; # something?
+		if ($firstFile)
+		{
+			`cp -r $realOut/* $realOut.bak`;
+		}
+		# Clean existing logs
+		`rm -f $realOut/log/*.log`;
 	}
 }
 
 # Edit the .config using xconfig.
 sub edit
 {
-	fetch();
+	dprint("calling edit()");
+	clean();
+	fetch_and_uncompress();
 	patch();
-	print " + editing $kernelConfigFile";
-	print " + kernel config file with current sources.";
-	print " + please save your configuration when you have finished editing!";
-	`( cd $workDir/$kernelSources && make xconfig )`,
-	print " + creating backup ...";
+	step_print("edit configuration file:
+$kernelConfigFile");
+	print "Please save your configuration in the graphical interface when you have
+finished editing. If you don't save, the configuration file will be untouched.
+Now starting graphical interface ...\n";
+	clean_log($logFiles{EDIT});
+	command("( cd $workDir/$kernelSources && make xconfig )",
+	$logFiles{EDIT});
+	step_print("creating backup ...");
 	`cp -f $kernelConfigFile $kernelConfigFile.old`;
-	print " + copynig new configuration in";
-	print " + $kernelConfigFile ...";
+	step_print("copynig new configuration in\n$kernelConfigFile ...");
 	`cp -f $workDir/$kernelSources/.config $kernelConfigFile`;
 }
 
-# Fetches kernel.org gpg key.
-sub gpg
+# executes $ARGV[0] and logs the result in $ARGV[1]
+# TODO Timeout on child's STDOUT. If nothing is displayed for a long time, show
+# log end.
+# TODO If an error occurs in the child, show log path!!!!!!
+sub command
 {
-	print " + fetching kernel.org gpg key ...";
-	`gpg --keyserver wwwkeys.pgp.net --recv-keys 0x517D0F0E`;
+	# Open log file
+	open(LOGFILE, "+>> $_[1]") or die "Can't write $_[1]: $!";
+	# Disable buffered output (see Perl CookBook, 7.12 "Flushing Output")
+	LOGFILE->autoflush(1);
+	# Write command in log file
+	print LOGFILE "command:\n\"$_[0]\"\n\nResult:\n";
+	pipe(README, WRITEME);
+	README->autoflush(1);
+	WRITEME->autoflush(1);
+	if (my $pid = fork)
+	{
+		# parent
+		$SIG{CHLD} = sub { 1 while (( waitpid(-1, WNOHANG)) > 0) };
+		close(WRITEME);
+	}
+	else
+	{
+	   # child
+	   die "cannot fork: $!" unless defined $pid;
+	   open(STDOUT, ">&=WRITEME")   or die "Couldn't redirect STDOUT: $!";
+	   open(STDERR, ">&=WRITEME")   or die "Couldn't redirect STDOUT: $!";
+		STDOUT->autoflush(1);
+		STDERR->autoflush(1);
+	   close(README);
+	   close(LOGFILE);
+	   exec($_[0]) or die "
+Error while running
+$_[0]
+Error message: $!
+
+Look at the following log file for more information:
+$_[1]";
+	}
+	while (<README>) { print LOGFILE; }
+	close(README);
+	close(LOGFILE);
 }
 
-sub readConfigFile
+# blanks the $_[0] log file
+sub clean_log
 {
-	while ($_[0])
+	`echo > $_[0]`;
+}
+
+# debug print
+sub dprint
+{
+	if ($debugMode)
 	{
-		chomp;                  # no newline
-		s/#.*//;                # no comments
-		s/^\s+//;               # no leading white
-		s/\s+$//;               # no trailing white
-		next unless length;     # anything left?
-		my ($var, $value) = split(/\s*=\s*/, $_, 2);
-		$userPreferences{$var} = $value;
+		print "[debug] $_[0]\n";
 	}
 }
+
+# Sets $stepCount
+sub set_step_count
+{
+	switch($options{t})
+	{
+		case "kernel"
+		{$stepCount = 9;}
+		case "modules"
+		{$stepCount = 9;}
+		case "kernel-modules"
+		{$stepCount = 11;}
+		case "edit"
+		{$stepCount = 8;}
+		case "fetch"
+		{$stepCount = 4;}
+		case "clean"
+		{$stepCount = 2;}
+		case "clean-binary"
+		{$stepCount = 4;}
+		else
+		{
+			print STDERR "Error: invalid target \"$options{t}\"!\n";
+			exit 1;
+		}
+	}
+}
+
+# Prints a step progress
+sub step_print
+{
+	$step = $step + 1;
+	print "[$step/$stepCount] $_[0]\n";
+}
+
+# Reads the xml file which contains kernel build information.
+sub read_build_xml_config
+{
+	# Those three variables are used to extract the xml file's name
+	my $volume;
+	my $directories;
+	my $file;
+	($volume,$directories,$file) = File::Spec->splitpath($options{f});
+	step_print("reading \"$file\" ...");
+	my $config = eval { XMLin($options{f}, ForceArray => 0, KeyAttr => ['file']) };
+	if ($@ || not defined $config->{kernelversion})
+	{
+		print STDERR "error while reading build configuration XML file!
+is it valid XML?\n";
+		exit 1;
+	}
+	if ($debugMode)
+		{ dprint("\$config (XML parsing result):\n\n" . Dumper($config)); }
+	# Set $buildXmlConfig according to what was read in the XML
+	$buildXmlConfig{KERNEL_NAME} = $config->{kernelname};
+	$buildXmlConfig{PACKAGE_REVISION} = $config->{packagerevision};
+	$buildXmlConfig{KERNEL_VERSION} = $config->{kernelversion};
+	$buildXmlConfig{MAKE_KPKG_OPTIONS} = $config->{makekpkgoptions};
+	$buildXmlConfig{KERNEL_CONFIG_FILE} = $config->{kernelconfigfile};
+	$buildXmlConfig{PATCHES} = $config->{patches};
+#	print Dumper($buildXmlConfig{PATCHES});
+
+#	my $patches = $config->{patches}-{patch};
+#	print Dumper($patches);
+#	print $patches;
+#	my %hash = $patches;
+#	my @keys = keys %patches;
+#	my @patchKeys = keys %buildXmlConfigPatches;
+	
+#	my %patches = %buildXmlConfigPatches;
+#	print Dumper(%patches);
+#	for my $patchKey (@patchKeys)
+#	{
+#		print "$patchKey\n";
+#	}
+	
+	
+#	print Dumper($patchesArrayOfHashRef);
+#	exit 1;
+
+#	print "size: " . scalar($patchesArrayOfHash) . "\n";
+#	for my $patch ($patchesArrayOfHash)
+#	{
+#		%hash = $patchesArrayOfHash[$i];
+#		push($buildXmlConfig{PATCHES} ,[$_]);
+#		print "once\n";
+#		print Dumper($patch);
+#	}
+	# Get the build XML config file's directory
+	($volume,$directories,$file) = File::Spec->splitpath(
+												File::Spec->canonpath(
+													File::Spec->rel2abs($options{f})));
+	$buildXmlConfigDir = $directories;
+	if ($debugMode) { dprint("\%builXmlConfig:\n\n" . Dumper(%buildXmlConfig)); }
+}
+
+# Fetches kernel.org gpg key.
+#sub gpg
+#{
+#	print "fetching kernel.org gpg key ...";
+#	`gpg --keyserver wwwkeys.pgp.net --recv-keys 0x517D0F0E`;
+#}
