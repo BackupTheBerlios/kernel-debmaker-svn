@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<buildconf>
+<kernelbuild>
 <kernelname>srv-presario9xx</kernelname>
 <packagerevision>1</packagerevision>
 <kernelversion>2.6.9</kernelversion>
 <makekpkgoptions>--initrd</makekpkgoptions>
 <kernelconfigfile>config-2.6.9-srv-presario9xx-1.0</kernelconfigfile>
 <patches>bootsplash-3.1.4-sp3-2.6.9-rc4.diff debian-logo-2.6.2 supermount-ng207.diff</patches>
-</buildconf>
+</kernelbuild>
