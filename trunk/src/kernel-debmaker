@@ -1,7 +1,0 @@
-#!/bin/sh
-
-# install directory
-# ex: MAKEFILE_DIR=/home/olivier/projects/kernel-debmaker/src
-MAKEFILE_DIR=/home/olivier/projects/kernel-debmaker/src
-
-( cd $MAKEFILE_DIR && make -f ./kernel-debmaker.Makefile $1 )
