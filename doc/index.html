@@ -29,7 +29,7 @@ and an <span style="font-weight: bold;">apt repository</span></big>.<br>
 </ul>
 <h2>Requirements<br>
 </h2>
-Required before running <span style="font-style: italic;">"make"</span>:<br>
+Required before running <span style="font-style: italic;">kernel-debmaker</span>:<br>
 <ul>
   <li style="font-style: italic;">apt-get install <span
  style="font-weight: bold;">kernel-package</span></li>
@@ -41,49 +41,79 @@ kernel-patch-debian"</span> to show the available debian patches)</li>
 <ul>
   <li>edit your<span style="font-style: italic;"> <span
  style="font-weight: bold;">/etc/kernel-pkg.conf</span></span>
-or <span style="font-style: italic; font-weight: bold;">~root/.kernel-pkg.conf</span>
+or <span style="font-style: italic; font-weight: bold;">~root/.kernel-pkg.conf</span>,
+put the right values in it (name, email)
 and
 make sure you have a <span style="font-style: italic;">"image_in_boot
 := True"</span> line in it. Add it if it's not here.</li>
+  <li>you need to have a&nbsp; gpg key which matches the name and email
+you put in kernel-pkg.conf. Use "gpg --gen-key" using the default
+values to generate one.<br>
+  </li>
   <li>get the <span style="font-style: italic;">"ketchup"</span>
 script ( <a title="Get the &quot;ketchup&quot; script" target="_blank"
  href="http://www.selenic.com/ketchup/">http://www.selenic.com/ketchup/
-    </a>), which requires <span style="font-weight: bold;">python</span><br>
-  </li>
-  <li>fill the config section of the <span style="font-style: italic;">Makefile</span></li>
-  <li>fasten your seatbelt and run "make" as root ;)</li>
+    </a>), which requires <span style="font-weight: bold;">python.&nbsp;
+    </span>The current version of this script at the moment of this
+release is located in the <span style="font-style: italic;">/bin</span>
+directory of the tarball.</li>
 </ul>
-<h2>Make targets<br>
+<h2>Making a kernel configuration<br>
 </h2>
-<ul style="font-style: italic;">
-  <li>all</li>
+<ul>
+  <li>start your own kernel configuration, using the examples located
+in <span style="font-style: italic;">examples/</span>. <br>
+  </li>
 </ul>
 <ul>
-Fetches the sources, builds the .deb packages of the kernel, and
-creates an apt
-repository for them.<br>
+  <li>run <span style="font-weight: bold; font-style: italic;">"kernel-debmaker
+TARGET"</span>, where target is one of the followings.<span
+ style="font-weight: bold;"></span></li>
 </ul>
+<h2>Make targets</h2>
+<ul>
+  <li> <span style="font-style: italic; font-weight: bold;">kernel</span></li>
+</ul>
+<div style="margin-left: 40px;">builds .deb's of kernel + modules
+(everything which is in the kernel sources tree thanks to make-kpkg</div>
 <ul style="font-style: italic;">
+</ul>
+<ul>
+&nbsp; <br style="font-style: italic;">
+  <li style="font-style: italic; font-weight: bold;">modules</li>
+</ul>
+<div style="margin-left: 40px;"><span style="font-style: italic;"></span>builds
+.deb's of modules using files in /usr/src/modules.<br>
+TODO: explain + links about&nbsp; .deb module sources<br>
+</div>
+<ul style="font-weight: bold;">
+  <li style="font-style: italic;">kernel-modules</li>
+</ul>
+<div style="margin-left: 40px;">alias for kernel + modules <br>
+</div>
+<ul style="font-style: italic; font-weight: bold;">
+  <li>edit</li>
+</ul>
+<div style="margin-left: 40px;">edit the kernel config file with "make
+xconfig"<br>
+</div>
+<ul style="font-style: italic; font-weight: bold;">
   <li>fetch</li>
 </ul>
-<div style="margin-left: 40px;">Fetches the kernel sources thanks to
-the ketchup script.<br>
+<div style="margin-left: 40px;">fetch sources and create a sources tree
+in the working directory<br>
 </div>
-<ul style="font-style: italic;">
+<ul style="font-style: italic; font-weight: bold;">
   <li>clean</li>
 </ul>
-<div style="margin-left: 40px;">Cleans the installed sources tree (<span
- style="font-style: italic;">i.e.</span> runs <span
- style="font-style: italic;">"make clean"</span> in the sources tree).<br>
+<div style="margin-left: 40px;">clean temporary files<br>
 </div>
-<ul style="font-style: italic;">
+<ul style="font-style: italic; font-weight: bold;">
   <li>clean-binary</li>
 </ul>
-<div style="margin-left: 40px;">Removes the apt repository and the
-sources tree.<br>
+<div style="margin-left: 40px;">clean temporary files and built packages<br>
 </div>
 <span style="font-weight: bold;"></span>
-<h2>Download</h2>
 <h2>Todo</h2>
 <ul>
   <li>alsa does not work! (at least on my laptop)</li>
@@ -125,8 +155,22 @@ kernel-debmaker-2.6.5-oricordeau-presario9xx)</li>
   <li>test suite: build standard debian kernels</li>
   <li>XML configuration files + gtk GUI</li>
   <li>check that all build dependencies are here before building</li>
-  <li>colormake support<br>
+  <li>colormake support</li>
+  <li>patches support</li>
+</ul>
+<h2>Changelog</h2>
+<ul>
+  <li>0.1<br>
   </li>
 </ul>
+<div style="margin-left: 40px;">Initial release: an empty shell script
+wrapping a Makefile<br>
+</div>
+<ul>
+  <li>0.2<br>
+  </li>
+</ul>
+<div style="margin-left: 40px;"><br>
+</div>
 </body>
 </html>

@@ -473,10 +473,7 @@ CONFIG_IEEE1394_CONFIG_ROM_IP1394=y
 #
 # Device Drivers
 #
-
-#
-# Texas Instruments PCILynx requires I2C
-#
+# CONFIG_IEEE1394_PCILYNX is not set
 CONFIG_IEEE1394_OHCI1394=m
 
 #
@@ -865,7 +862,72 @@ CONFIG_DRM_RADEON=m
 #
 # I2C support
 #
-# CONFIG_I2C is not set
+CONFIG_I2C=m
+# CONFIG_I2C_CHARDEV is not set
+
+#
+# I2C Algorithms
+#
+CONFIG_I2C_ALGOBIT=m
+# CONFIG_I2C_ALGOPCF is not set
+
+#
+# I2C Hardware Bus support
+#
+# CONFIG_I2C_ALI1535 is not set
+# CONFIG_I2C_ALI1563 is not set
+# CONFIG_I2C_ALI15X3 is not set
+# CONFIG_I2C_AMD756 is not set
+# CONFIG_I2C_AMD8111 is not set
+# CONFIG_I2C_ELEKTOR is not set
+# CONFIG_I2C_I801 is not set
+# CONFIG_I2C_I810 is not set
+# CONFIG_I2C_ISA is not set
+# CONFIG_I2C_NFORCE2 is not set
+# CONFIG_I2C_PARPORT is not set
+# CONFIG_I2C_PARPORT_LIGHT is not set
+# CONFIG_I2C_PIIX4 is not set
+# CONFIG_I2C_PROSAVAGE is not set
+# CONFIG_I2C_SAVAGE4 is not set
+# CONFIG_SCx200_ACB is not set
+# CONFIG_I2C_SIS5595 is not set
+# CONFIG_I2C_SIS630 is not set
+# CONFIG_I2C_SIS96X is not set
+# CONFIG_I2C_VIA is not set
+# CONFIG_I2C_VIAPRO is not set
+# CONFIG_I2C_VOODOO3 is not set
+
+#
+# Hardware Sensors Chip support
+#
+# CONFIG_I2C_SENSOR is not set
+# CONFIG_SENSORS_ADM1021 is not set
+# CONFIG_SENSORS_ASB100 is not set
+# CONFIG_SENSORS_DS1621 is not set
+# CONFIG_SENSORS_FSCHER is not set
+# CONFIG_SENSORS_GL518SM is not set
+# CONFIG_SENSORS_IT87 is not set
+# CONFIG_SENSORS_LM75 is not set
+# CONFIG_SENSORS_LM78 is not set
+# CONFIG_SENSORS_LM80 is not set
+# CONFIG_SENSORS_LM83 is not set
+# CONFIG_SENSORS_LM85 is not set
+# CONFIG_SENSORS_LM90 is not set
+# CONFIG_SENSORS_VIA686A is not set
+# CONFIG_SENSORS_W83781D is not set
+# CONFIG_SENSORS_W83L785TS is not set
+# CONFIG_SENSORS_W83627HF is not set
+
+#
+# Other I2C Chip support
+#
+# CONFIG_SENSORS_EEPROM is not set
+# CONFIG_SENSORS_PCF8574 is not set
+# CONFIG_SENSORS_PCF8591 is not set
+# CONFIG_I2C_DEBUG_CORE is not set
+# CONFIG_I2C_DEBUG_ALGO is not set
+# CONFIG_I2C_DEBUG_BUS is not set
+# CONFIG_I2C_DEBUG_CHIP is not set
 
 #
 # Misc devices
@@ -897,7 +959,7 @@ CONFIG_VIDEO_SELECT=y
 # CONFIG_FB_MATROX is not set
 # CONFIG_FB_RADEON_OLD is not set
 CONFIG_FB_RADEON=m
-# CONFIG_FB_RADEON_I2C is not set
+CONFIG_FB_RADEON_I2C=y
 # CONFIG_FB_RADEON_DEBUG is not set
 # CONFIG_FB_ATY128 is not set
 # CONFIG_FB_ATY is not set
@@ -1065,6 +1127,7 @@ CONFIG_SOUND_TRIDENT=y
 # CONFIG_SOUND_MSNDPIN is not set
 # CONFIG_SOUND_VIA82CXXX is not set
 # CONFIG_SOUND_OSS is not set
+# CONFIG_SOUND_TVMIXER is not set
 # CONFIG_SOUND_ALI5455 is not set
 # CONFIG_SOUND_FORTE is not set
 # CONFIG_SOUND_RME96XX is not set

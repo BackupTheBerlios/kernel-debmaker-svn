@@ -15,13 +15,14 @@ WORK_DIR = /tmp
 # ex: OUT_DIR=/tmp/kernel_packages
 # warning! this Makefile will overwrite files in this directory!
 # You might want to output the packages in /tmp/something and then move them.
-OUT_DIR = /home/olivier/kernel_packages
+OUT_DIR = /root/kernel_packages
 
 # absolute path to the ketchup script (absolute!!).
 # ex: KETCHUP = /home/olivier/projects/kernel-debmaker/ketchup-0.7
 KETCHUP = /home/olivier/projects/kernel-debmaker/bin/ketchup-0.7
 
 # (* End of the config section *)
+
 
 
 
@@ -56,15 +57,21 @@ REAL_OUT = $(OUT_DIR)/$(KERNEL_VERSION)-$(KERNEL_NAME)
 help:
 	@echo " (* kernel-debmaker help *)"
 	@echo
-	@echo " * kernel-debmaker kernel (builds .deb's of kernel + modules thanks to"
-	@echo "   make-kpkg)"
-	@echo " * kernel-debmaker modules (builds .debs of modules using files in"
-	@echo "   /usr/src/modules)"
-	@echo " * kernel-debmaker kernel-modules (alias for kernel + modules)"
-	@echo " * kernel-debmaker fetch (fetch sources and create a sources repository in"
-	@echo "   $(WORK_DIR)/$(KERNEL_SOURCES))"
-	@echo " * kernel-debmaker clean (clean temporary files)"
-	@echo " * kernel-debmaker clean-binary (clean temporary files and built packages)"
+	@echo " * kernel-debmaker kernel"
+	@echo "   builds .deb's of kernel + modules (everything which is in the kernel"
+	@echo "   sources tree) thanks to make-kpkg"
+	@echo " * kernel-debmaker modules"
+	@echo "   builds .deb's of modules using files in /usr/src/modules"
+	@echo " * kernel-debmaker kernel-modules"
+	@echo "   alias for kernel + modules"
+	@echo " * kernel-debmaker edit"
+	@echo "   edit the kernel config file with \"make xconfig\""
+	@echo " * kernel-debmaker fetch"
+	@echo "   fetch sources and create a sources tree in the working directory"
+	@echo " * kernel-debmaker clean"
+	@echo "   clean temporary files"
+	@echo " * kernel-debmaker clean-binary"
+	@echo "   clean temporary files and built packages"
 
 kernel: clean-binary-kernel fetch debian _kernel clean
 
@@ -133,18 +140,18 @@ clean:
 	@echo " + cleaning temporary files ..."
 	@rm -Rf $(WORK_DIR)/$(KERNEL_SOURCES)
 
-gpg:
-	@echo " + fetching kernel.org gpg key ..."
-	@gpg --keyserver wwwkeys.pgp.net --recv-keys 0x517D0F0E
+#gpg:
+#	@echo " + fetching kernel.org gpg key ..."
+#	@gpg --keyserver wwwkeys.pgp.net --recv-keys 0x517D0F0E
 
-fetch: clean gpg
+fetch: clean# gpg
 	@echo " + fetching kernel sources and creating kernel sources tree ..."
 	@( cd $(WORK_DIR) && \
 	mkdir -p $(KERNEL_SOURCES) && \
 	cd $(KERNEL_SOURCES) && \
-	$(KETCHUP) $(KERNEL_VERSION) )
+	nice -n 19 $(KETCHUP) $(KERNEL_VERSION) )
 	@echo " + copying config file in $(WORK_DIR)/$(KERNEL_SOURCES)"
 	@cp $(KERNEL_CONFIG_FILE) \
 	$(WORK_DIR)/$(KERNEL_SOURCES)/.config
 
-.PHONY: gpg
+#.PHONY: gpg
