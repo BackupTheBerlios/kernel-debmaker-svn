@@ -28,11 +28,12 @@ PACKAGE_REVISION = 1
 #     latest 2.6 release candidate
 #     KERNEL_VERSION = 2.6-tip
 #     latest snapshot (including -bk snapshots)
-KERNEL_VERSION = 2.6.6
+KERNEL_VERSION = 2.6.4
 
-# Patches to apply while building .deb's with make-kpkg. You must install
+# patches to apply while building .deb's with make-kpkg. You must install
 # the corresponding packages (if the name of the package is
 # "kernel-patch-something", the option is "--added_patches something").
+# check `man make-kpkg'.
 # ex: MAKE_KPKG_OPTIONS = --added_patches debianlogo
 #     debian logo patch (package: kernel-patch-debianlogo).
 #     MAKE_KPKG_OPTIONS = --added_patches debian
@@ -40,10 +41,21 @@ KERNEL_VERSION = 2.6.6
 #     to the asked kernel version).
 #     MAKE_KPKG_OPTIONS = --added_patches debian --added_patches debianlogo
 #     both debian logo and debian patch.
+#     MAKE_KPKG_OPTIONS = --initrd
+#     perform any actions necessary for a kernel loaded using initrd. 
 #     MAKE_KPKG_OPTIONS = 
 #     nothing...
-MAKE_KPKG_OPTIONS = --added_patches debian --added_patches debianlogo
+MAKE_KPKG_OPTIONS = --initrd
+
+# patches to apply (not packaged for debian)
+# ex: PATCHES = /home/olivier/projects/kernel-debmaker/examples/2.6.6-srv-presario9xx/debian-logo-2.6.2
+#     use this patch.
+#     PATCHES = /home/foo/bar.patch /home/foo/baz.patch
+#     use the two specified patches.
+#     PATCHES = 
+#     no other patch.
+PATCHES = /home/olivier/projects/kernel-debmaker/examples/2.6.4-srv-presario9xx/bootsplash-3.1.4-2.6.3.diff /home/olivier/projects/kernel-debmaker/examples/2.6.4-srv-presario9xx/debian-logo-2.6.2 /home/olivier/projects/kernel-debmaker/examples/2.6.4-srv-presario9xx/supermount-2.0.4-2.6.2.patch
 
 # the config file used for the build
 # ex: CONFIG_FILE=/home/foo/backup/config.laptop
-KERNEL_CONFIG_FILE = /home/olivier/projects/kernel-debmaker/examples/2.6.6-srv-presario9xx/config-2.6.6-srv-presario9xx-1.0
+KERNEL_CONFIG_FILE = /home/olivier/projects/kernel-debmaker/examples/2.6.4-srv-presario9xx/config-2.6.4-srv-presario9xx-1.0

@@ -1,6 +1,6 @@
 # First, include your kdm file. Look in ./examples/ for examples.
 # ex:    include /home/foo/my_kdm_file.kdm
-include ../examples/2.6.6-srv-presario9xx/2.6.6-srv-presario9xx.kdm
+include ../examples/2.6.4-srv-presario9xx/2.6.4-srv-presario9xx.kdm
 
 
 # (* Begin of the config section *)
@@ -48,7 +48,7 @@ KETCHUP = /home/olivier/projects/kernel-debmaker/bin/ketchup-0.7
 ###########################################################################
 
 
-MAKE_KPKG = nice -n 19 make-kpkg -rev Custom.$(PACKAGE_REVISION) --append_to_version -$(KERNEL_NAME)
+MAKE_KPKG = nice -n 9 make-kpkg -rev Custom.$(PACKAGE_REVISION) --append_to_version -$(KERNEL_NAME)
 
 KERNEL_SOURCES=linux-$(KERNEL_VERSION)
 
@@ -73,7 +73,7 @@ help:
 	@echo " * kernel-debmaker clean-binary"
 	@echo "   clean temporary files and built packages"
 
-kernel: clean-binary-kernel fetch debian _kernel clean
+kernel: backup clean-binary-kernel fetch patch debian _kernel clean
 
 _kernel:
 	@echo " + building kernel packages ..."
@@ -89,7 +89,7 @@ _kernel:
 	$(WORK_DIR)/kernel-source-[0-9].[0-9].[0-9]-$(KERNEL_NAME)*.deb \
 	$(REAL_OUT)
 
-modules: clean-binary-modules fetch debian _modules clean
+modules: backup clean-binary-modules fetch patch debian _modules clean
 
 _modules: 
 	@echo " + building modules packages ..."
@@ -98,17 +98,12 @@ _modules:
 	nice -n 19 $(MAKE_KPKG) $(MAKE_KPKG_OPTIONS) \
 	--bzimage modules_image )
 	@mkdir -p $(REAL_OUT)
-	@mv $(WORK_DIR)/*-module-[0-9].[0-9].[0-9]-$(KERNEL_NAME)*.deb \
+	@mv $(WORK_DIR)/*-module*-[0-9].[0-9].[0-9]-$(KERNEL_NAME)*.deb \
 	$(REAL_OUT)
 
-kernel-modules: clean-binary-modules fetch debian _kernel _modules clean
+kernel-modules: clean-binary-modules fetch patch debian _modules _kernel clean
 
-debian:
-	@echo " + running make-kpkg debian ..."
-	@( cd $(WORK_DIR)/$(KERNEL_SOURCES) && \
-	$(MAKE_KPKG) debian )
-
-edit: fetch
+edit: fetch patch
 	@echo " + editing $(KERNEL_CONFIG_FILE)"
 	@echo " + kernel config file with current sources."
 	@echo " + please save your configuration when you have finished editing!"
@@ -139,6 +134,27 @@ clean-binary: clean clean-binary-kernel clean-binary-modules
 clean:
 	@echo " + cleaning temporary files ..."
 	@rm -Rf $(WORK_DIR)/$(KERNEL_SOURCES)
+
+# applies asked patches
+patch:
+	@for i in $(PATCHES);\
+	do\
+	( echo " + applying $$i ..." && \
+	cd $(WORK_DIR)/$(KERNEL_SOURCES) && \
+	patch -p1 < $$i ) || exit 1;\
+	done
+
+debian:
+	@echo " + running make-kpkg debian ..."
+	@( cd $(WORK_DIR)/$(KERNEL_SOURCES) && \
+	$(MAKE_KPKG) debian )
+
+backup:
+	@if [ -d $(REAL_OUT) ]; then \
+	echo " + creating a backup of old files in" && \
+	echo "   $(REAL_OUT).bak ..." && \
+	mkdir $(REAL_OUT).bak && cp -r $(REAL_OUT)/* $(REAL_OUT).bak \
+	fi;
 
 #gpg:
 #	@echo " + fetching kernel.org gpg key ..."
